@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+import json
 from schemas import ChatRequest
 from llm import ask_llm
 from tools import get_weather
