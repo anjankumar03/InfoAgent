@@ -12,7 +12,7 @@ chat_sessions: Dict[str, List[Dict[str, str]]] = {}
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://infoagent-frontend.onrender.com"],
+    allow_origins=["http://localhost:3000", "https://infoagent-1.onrender.com"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
