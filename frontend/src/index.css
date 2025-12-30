@@ -113,7 +113,6 @@ body {
 .input-area {
   padding: 32px;
   background-color: #ffffff;
-  border-top: 1px solid #f0f0f0;
 }
 
 .input-container {
@@ -128,11 +127,12 @@ body {
   border-radius: 24px;
   border: 1px solid #d1d5db;
   transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .input-wrapper:focus-within {
   border-color: #9ca3af;
-  box-shadow: none;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .message-input {
@@ -243,11 +243,10 @@ body {
 }
 
 .typing-indicator {
-  max-width: 900px;
+  max-width: 768px;
   margin: 0 auto;
   padding: 24px;
   display: flex;
-  gap: 16px;
   align-items: center;
   background-color: #ffffff;
 }
@@ -300,125 +299,213 @@ body {
   opacity: 0.6;
 }
 
-/* Formatted Response Styles */
+/* Enhanced ChatGPT-like Response Styles */
 .formatted-response {
-  line-height: 1.6;
-}
-
-.response-heading {
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 16px 0 12px 0;
-  padding-bottom: 8px;
-}
-
-.response-heading.level-2 {
-  font-size: 15px;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.response-heading.level-3 {
-  font-size: 14px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.response-heading.level-4 {
-  font-size: 13px;
-}
-
-.response-heading.level-5,
-.response-heading.level-6 {
-  font-size: 12px;
-}
-
-.response-heading:first-child {
-  margin-top: 0;
-}
-
-.response-paragraph {
-  margin: 6px 0;
   line-height: 1.7;
-  color: #374151;
-  font-size: 15px;
+  font-size: 16px;
 }
 
-.response-paragraph:first-child {
-  margin-top: 0;
+/* Main heading styles */
+.response-heading.main-heading {
+  margin: 24px 0 16px 0;
 }
 
-.response-paragraph:last-child {
-  margin-bottom: 0;
+.main-response-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
+/* Sub heading styles */
+.response-heading.sub-heading {
+  margin: 20px 0 12px 0;
+}
+
+.sub-response-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d2d2d;
+  margin: 0;
+  padding-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Enhanced paragraph styles */
+.response-paragraph {
+  margin: 12px 0;
+  line-height: 1.7;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 450;
+}
+
+.response-paragraph p {
+  margin: 0;
+  line-height: 1.7;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 450;
+}
+
+/* Enhanced list styles */
 .response-list-item {
   display: flex;
   align-items: flex-start;
-  margin: 8px 0;
-  padding-left: 4px;
+  margin: 10px 0;
+  padding-left: 8px;
 }
 
 .list-bullet {
-  color: #6b7280;
+  color: #4299e1;
   margin-right: 12px;
-  margin-top: 2px;
+  margin-top: 3px;
   font-weight: bold;
   flex-shrink: 0;
+  font-size: 16px;
+}
+
+.list-content {
+  line-height: 1.6;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 450;
+}
+
+/* Enhanced text formatting */
+.formatted-response strong {
+  font-weight: 600;
+  color: #000000;
+}
+
+.formatted-response em {
+  font-style: italic;
+  color: #2d2d2d;
+}
+
+/* Emoji spacing */
+.formatted-response h2:first-child,
+.formatted-response h3:first-child {
+  margin-top: 8px;
+}
+
+/* Better spacing for consecutive elements */
+.response-paragraph + .response-heading {
+  margin-top: 24px;
+}
+
+.response-list-item + .response-heading {
+  margin-top: 24px;
+}
+
+/* Code block enhancements */
+.response-code-container {
+  margin: 20px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Inline code styling */
+.inline-code {
+  background-color: #f7fafc;
+  color: #e53e3e;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  border: 1px solid #e2e8f0;
+  font-weight: 500;
 }
 
 .response-code-container {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  margin: 16px 0;
+  background-color: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  margin: 16px -24px;
   overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  width: calc(100% + 48px);
 }
 
 .code-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #f1f5f9;
-  padding: 8px 12px;
-  border-bottom: 1px solid #e2e8f0;
+  background-color: #161b22;
+  padding: 8px 16px;
+  border-bottom: 1px solid #30363d;
   font-size: 12px;
+  color: #7d8590;
 }
 
 .code-language {
-  color: #64748b;
-  font-weight: 500;
+  color: #7d8590;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: lowercase;
 }
 
 .copy-button {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: background-color 0.2s;
+  padding: 8px;
+  border-radius: 6px;
+  color: #7d8590;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .copy-button:hover {
-  background-color: #e2e8f0;
+  background-color: #30363d;
+  color: #f0f6fc;
+}
+
+.copy-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.copy-button[title="Copied!"] {
+  color: #238636;
+}
+
+.copy-button[title="Copied!"]:hover {
+  color: #2ea043;
+  background-color: rgba(35, 134, 54, 0.15);
 }
 
 .response-code {
-  background-color: transparent;
+  background-color: #0d1117;
   border: none;
   border-radius: 0;
   padding: 16px;
   margin: 0;
   overflow-x: auto;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.45;
+  color: #e6edf3;
 }
 
 .response-code code {
   background: none;
   padding: 0;
   border: none;
-  color: #1f2937;
+  color: inherit;
+  white-space: pre;
+  display: block;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .inline-code {
@@ -431,23 +518,3 @@ body {
   border: 1px solid #e2e8f0;
 }
 
-.formatted-response strong {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.formatted-response em {
-  font-style: italic;
-  color: #4b5563;
-}
-
-.formatted-response a {
-  color: #2563eb;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.2s;
-}
-
-.formatted-response a:hover {
-  border-bottom-color: #2563eb;
-}

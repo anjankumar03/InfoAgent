@@ -2,11 +2,24 @@
 export const formatResponse = (text) => {
   if (!text) return text;
 
-  // Split text by double newlines first, then by single newlines for better paragraph detection
-  const sections = text.split(/\n\s*\n/).filter(p => p.trim());
+  // First, extract code blocks marked with ```
+  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  const codeBlocks = [];
+  let match;
+  let processedText = text;
   
+  // Extract and replace code blocks with placeholders
+  while ((match = codeBlockRegex.exec(text)) !== null) {
+    const language = match[1] || 'javascript';
+    const code = match[2].trim();
+    const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+    codeBlocks.push({ language, code, placeholder });
+    processedText = processedText.replace(match[0], placeholder);
+  }
+
+  // Split text by double newlines for sections
+  const sections = processedText.split(/\n\s*\n/).filter(p => p.trim());
   const formattedSections = [];
-  let currentCodeBlock = null;
   
   sections.forEach((section, sectionIndex) => {
     const lines = section.split('\n').filter(line => line.trim());
@@ -15,61 +28,57 @@ export const formatResponse = (text) => {
       const trimmed = line.trim();
       const key = `${sectionIndex}-${lineIndex}`;
       
-      // Check if it's code (contains common code patterns)
-      if (/```|`[^`]+`|function\s+\w+|class\s+\w+|import\s+|from\s+|def\s+\w+|console\.log|print\(|\w+\s*=\s*|\w+\(.*\)|\{|\}|;$/.test(trimmed)) {
-        if (!currentCodeBlock) {
-          currentCodeBlock = { type: 'code', content: trimmed, key };
-        } else {
-          currentCodeBlock.content += '\n' + trimmed;
+      // Check if this is a code block placeholder
+      const codeBlockMatch = trimmed.match(/__CODE_BLOCK_(\d+)__/);
+      if (codeBlockMatch) {
+        const blockIndex = parseInt(codeBlockMatch[1]);
+        const codeBlock = codeBlocks[blockIndex];
+        if (codeBlock) {
+          formattedSections.push({ 
+            type: 'code', 
+            content: codeBlock.code, 
+            language: codeBlock.language,
+            key 
+          });
         }
-      } else {
-        // If we have a code block, push it and reset
-        if (currentCodeBlock) {
-          formattedSections.push(currentCodeBlock);
-          currentCodeBlock = null;
-        }
-        
-        // Check if it's a list item
-        if (/^[-*•]\s/.test(trimmed) || /^\d+\.\s/.test(trimmed)) {
-          formattedSections.push({ type: 'list-item', content: trimmed, key });
-        }
-        // Check if it's a heading (contains emoji, starts with #, or ends with :)
-        else if (/^#+\s/.test(trimmed) || /^[🌍🧠🔒💡⚡📚🎯🚀✨🔧📊🎨💻🌟📝🔍⭐🎪🎭🎨🎯🎪].+/.test(trimmed) || (trimmed.length < 100 && trimmed.endsWith(':'))) {
-          const level = trimmed.match(/^#+/) ? trimmed.match(/^#+/)[0].length : 1;
-          const content = trimmed.replace(/^#+\s*/, '').replace(/:$/, '');
-          formattedSections.push({ type: 'heading', content, level, key });
-        }
-        // Regular paragraph - split long paragraphs into smaller chunks
-        else if (trimmed.length > 0) {
-          if (trimmed.length > 200) {
-            // Split long paragraphs at sentence boundaries
-            const sentences = trimmed.split(/(?<=[.!?])\s+/);
-            let currentChunk = '';
-            
-            sentences.forEach((sentence, sentIndex) => {
-              if (currentChunk.length + sentence.length > 200 && currentChunk.length > 0) {
-                formattedSections.push({ type: 'paragraph', content: currentChunk.trim(), key: `${key}-${sentIndex}` });
-                currentChunk = sentence;
-              } else {
-                currentChunk += (currentChunk ? ' ' : '') + sentence;
-              }
-            });
-            
-            if (currentChunk.trim()) {
-              formattedSections.push({ type: 'paragraph', content: currentChunk.trim(), key: `${key}-final` });
+        return;
+      }
+      
+      // Check if it's a heading
+      if (/^#+\s/.test(trimmed) || /^[🌍🧠🔒💡⚡📚🎯🚀✨🔧📊🎨💻🌟📝🔍⭐🎪🎭🎨🎯🎪].+/.test(trimmed) || (trimmed.length < 100 && trimmed.endsWith(':')) || /^={3,}$/.test(trimmed)) {
+        if (/^={3,}$/.test(trimmed)) return; // Skip separator lines
+        const level = trimmed.match(/^#+/) ? trimmed.match(/^#+/)[0].length : 1;
+        const content = trimmed.replace(/^#+\s*/, '').replace(/:$/, '');
+        formattedSections.push({ type: 'heading', content, level, key });
+      }
+      // Check if it's a list item
+      else if (/^[-*•]\s/.test(trimmed) || /^\d+\.\s/.test(trimmed)) {
+        formattedSections.push({ type: 'list-item', content: trimmed, key });
+      }
+      // Regular paragraph
+      else if (trimmed.length > 0 && !trimmed.match(/^(Code|PYTHON|JAVASCRIPT|JAVA|SQL|JSON)$/)) {
+        if (trimmed.length > 200) {
+          const sentences = trimmed.split(/(?<=[.!?])\s+/);
+          let currentChunk = '';
+          
+          sentences.forEach((sentence, sentIndex) => {
+            if (currentChunk.length + sentence.length > 200 && currentChunk.length > 0) {
+              formattedSections.push({ type: 'paragraph', content: currentChunk.trim(), key: `${key}-${sentIndex}` });
+              currentChunk = sentence;
+            } else {
+              currentChunk += (currentChunk ? ' ' : '') + sentence;
             }
-          } else {
-            formattedSections.push({ type: 'paragraph', content: trimmed, key });
+          });
+          
+          if (currentChunk.trim()) {
+            formattedSections.push({ type: 'paragraph', content: currentChunk.trim(), key: `${key}-final` });
           }
+        } else {
+          formattedSections.push({ type: 'paragraph', content: trimmed, key });
         }
       }
     });
   });
-  
-  // Don't forget to push the last code block if it exists
-  if (currentCodeBlock) {
-    formattedSections.push(currentCodeBlock);
-  }
   
   return formattedSections;
 };

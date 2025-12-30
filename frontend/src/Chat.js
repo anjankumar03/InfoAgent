@@ -1,61 +1,204 @@
 import React, { useState, useEffect, useRef } from "react";
 import { sendMessage } from "./api";
-import { formatResponse, formatTextContent } from "./utils/formatResponse";
+import { formatTextContent } from "./utils/formatResponse";
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-tomorrow.css';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-java';
+import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-sql';
 import "./index.css";
 
 export default function Chat() {
   const [input, setInput] = useState("");
   const [chat, setChat] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [copiedStates, setCopiedStates] = useState({});
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
 
   // Component to render formatted bot responses
   const FormattedResponse = ({ text }) => {
-    const formattedParts = formatResponse(text);
+    // Enhanced parsing for ChatGPT-like formatting
+    const parseResponse = (text) => {
+      const lines = text.split('\n');
+      const parts = [];
+      let currentPart = { type: 'paragraph', content: '' };
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Skip empty lines
+        if (!line) {
+          if (currentPart.content) {
+            parts.push({ ...currentPart, key: parts.length });
+            currentPart = { type: 'paragraph', content: '' };
+          }
+          continue;
+        }
+        
+        // Main headings (# or ##)
+        if (line.match(/^#{1,2}\s/)) {
+          if (currentPart.content) {
+            parts.push({ ...currentPart, key: parts.length });
+          }
+          const level = line.match(/^#+/)[0].length;
+          parts.push({
+            type: 'heading',
+            level: level,
+            content: line.replace(/^#+\s/, ''),
+            key: parts.length
+          });
+          currentPart = { type: 'paragraph', content: '' };
+          continue;
+        }
+        
+        // Code blocks
+        if (line.startsWith('```')) {
+          if (currentPart.content) {
+            parts.push({ ...currentPart, key: parts.length });
+          }
+          
+          // Find the end of code block
+          let codeContent = '';
+          i++; // Skip the opening ```
+          while (i < lines.length && !lines[i].trim().startsWith('```')) {
+            codeContent += lines[i] + '\n';
+            i++;
+          }
+          
+          parts.push({
+            type: 'code',
+            content: codeContent.trim(),
+            key: parts.length
+          });
+          currentPart = { type: 'paragraph', content: '' };
+          continue;
+        }
+        
+        // List items
+        if (line.match(/^[-*•]\s/) || line.match(/^\d+\.\s/)) {
+          if (currentPart.type !== 'list') {
+            if (currentPart.content) {
+              parts.push({ ...currentPart, key: parts.length });
+            }
+            currentPart = { type: 'list', content: '' };
+          }
+          parts.push({
+            type: 'list-item',
+            content: line,
+            key: parts.length
+          });
+          continue;
+        }
+        
+        // Regular paragraph content
+        if (currentPart.type === 'list' && line) {
+          parts.push({ ...currentPart, key: parts.length });
+          currentPart = { type: 'paragraph', content: line };
+        } else {
+          currentPart.content += (currentPart.content ? ' ' : '') + line;
+        }
+      }
+      
+      // Add the last part
+      if (currentPart.content) {
+        parts.push({ ...currentPart, key: parts.length });
+      }
+      
+      return parts;
+    };
+    
+    const formattedParts = parseResponse(text);
     
     return (
       <div className="formatted-response">
         {formattedParts.map((part) => {
           switch (part.type) {
             case 'heading':
-              const HeadingTag = `h${Math.min((part.level || 1) + 1, 6)}`;
+              const isMainHeading = part.level === 1;
               return (
-                <div key={part.key} className={`response-heading level-${(part.level || 1) + 1}`}>
-                  {React.createElement(HeadingTag, { style: { margin: 0 } }, part.content)}
+                <div key={part.key} className={`response-heading ${isMainHeading ? 'main-heading' : 'sub-heading'}`}>
+                  {isMainHeading ? (
+                    <h2 className="main-response-title">{part.content}</h2>
+                  ) : (
+                    <h3 className="sub-response-title">{part.content}</h3>
+                  )}
                 </div>
               );
             case 'list-item':
               return (
                 <div key={part.key} className="response-list-item">
                   <span className="list-bullet">•</span>
-                  <span dangerouslySetInnerHTML={{ __html: formatTextContent(part.content.replace(/^[-*•]\s|^\d+\.\s/, '')) }} />
+                  <span className="list-content" dangerouslySetInnerHTML={{ 
+                    __html: formatTextContent(part.content.replace(/^[-*•]\s|^\d+\.\s/, '')) 
+                  }} />
                 </div>
               );
             case 'code':
-              const codeContent = part.content.replace(/```/g, '');
+              const codeContent = part.content;
+              const copied = copiedStates[part.key] || false;
+              
+              const handleCopy = async () => {
+                await navigator.clipboard.writeText(codeContent);
+                setCopiedStates(prev => ({ ...prev, [part.key]: true }));
+                setTimeout(() => {
+                  setCopiedStates(prev => ({ ...prev, [part.key]: false }));
+                }, 2000);
+              };
+              
+              const detectLanguage = (code) => {
+                if (/\b(import numpy|import pandas|def |print\(|plt\.|np\.|pd\.)/.test(code)) return 'python';
+                if (/\b(public|class|static|void|int|String)\b/.test(code)) return 'java';
+                if (/\b(function|const|let|var|=>)\b/.test(code)) return 'javascript';
+                if (/\b(SELECT|FROM|WHERE|INSERT)\b/i.test(code)) return 'sql';
+                if (/[{}]/.test(code) && /[":]/.test(code)) return 'json';
+                return 'python';
+              };
+              
+              const highlightCode = (code) => {
+                const language = detectLanguage(code);
+                try {
+                  return Prism.highlight(code, Prism.languages[language] || Prism.languages.javascript, language);
+                } catch (e) {
+                  return code;
+                }
+              };
+              
               return (
                 <div key={part.key} className="response-code-container">
                   <div className="code-header">
-                    <span className="code-language">Code</span>
+                    <span className="code-language">{detectLanguage(codeContent).toUpperCase()}</span>
                     <button 
                       className="copy-button"
-                      onClick={() => navigator.clipboard.writeText(codeContent)}
-                      title="Copy code"
+                      onClick={handleCopy}
+                      title={copied ? "Copied!" : "Copy code"}
                     >
-                      📋
+                      {copied ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                      )}
                     </button>
                   </div>
                   <pre className="response-code">
-                    <code>{codeContent}</code>
+                    <code dangerouslySetInnerHTML={{ __html: highlightCode(codeContent) }}></code>
                   </pre>
                 </div>
               );
             case 'paragraph':
             default:
               return (
-                <p key={part.key} className="response-paragraph" 
-                   dangerouslySetInnerHTML={{ __html: formatTextContent(part.content) }} />
+                <div key={part.key} className="response-paragraph">
+                  <p dangerouslySetInnerHTML={{ __html: formatTextContent(part.content) }} />
+                </div>
               );
           }
         })}
@@ -154,9 +297,6 @@ export default function Chat() {
           <>
             {chat.map((message, index) => (
               <div key={index} className={`message ${message.role}`}>
-                <div className={`message-avatar ${message.role === "user" ? "user-avatar" : "assistant-avatar"}`}>
-                  <span className="avatar-icon">{message.role === "user" ? "👤" : "🤖"}</span>
-                </div>
                 <div className="message-content">
                   {message.role === "assistant" ? (
                     <FormattedResponse text={message.text} />
@@ -169,7 +309,6 @@ export default function Chat() {
             
             {loading && (
               <div className="typing-indicator">
-                <div className="message-avatar assistant-avatar"><span className="avatar-icon">🤖</span></div>
                 <div className="typing-dots">
                   <div className="typing-dot"></div>
                   <div className="typing-dot"></div>
