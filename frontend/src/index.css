@@ -139,7 +139,7 @@ body {
   width: 100%;
   min-height: 24px;
   max-height: 200px;
-  padding: 12px 48px 12px 16px;
+  padding: 12px 88px 12px 48px;
   border: none;
   background: transparent;
   resize: none;
@@ -148,10 +148,168 @@ body {
   line-height: 1.5;
   color: #0d0d0d;
   font-family: inherit;
+  overflow-y: auto;
+  transition: height 0.1s ease;
 }
 
 .message-input::placeholder {
   color: #8e8ea0;
+}
+
+.plus-menu-container {
+  position: relative;
+}
+
+.plus-button {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background-color: #f4f4f4;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.plus-button:hover {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.plus-button:disabled {
+  background-color: #f9fafb;
+  color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.plus-menu {
+  position: absolute;
+  bottom: 45px;
+  left: 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.plus-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 14px;
+  color: #374151;
+  position: relative;
+}
+
+.plus-menu-item:hover {
+  background-color: #f9fafb;
+}
+
+.plus-menu-item svg {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.plus-menu-more {
+  justify-content: space-between;
+  position: relative;
+}
+
+.plus-menu-more:hover .more-submenu,
+.more-submenu:hover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.arrow-icon {
+  margin-left: auto;
+}
+
+.more-submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  overflow: hidden;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-5px);
+  transition: all 0.15s ease;
+  pointer-events: none;
+  z-index: 1001;
+}
+
+.more-submenu .plus-menu-item {
+  padding: 12px 16px;
+}
+
+.voice-button {
+  position: absolute;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  border: none;
+  background-color: #6b7280;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.voice-button:hover {
+  background-color: #4b5563;
+}
+
+.voice-button.recording {
+  background-color: #dc2626;
+  animation: pulse 1.5s infinite;
+}
+
+.voice-button.recording:hover {
+  background-color: #b91c1c;
+}
+
+.voice-button:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
 }
 
 .send-button {
